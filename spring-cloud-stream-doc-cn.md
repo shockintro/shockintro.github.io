@@ -57,7 +57,7 @@ Spring Cloud Stream提供了许多抽象和原语，用于简化针对于消息�
 - **可插入的Binder API**
 
 
-###**2.1应用模型(Application model)**
+### **2.1应用模型(Application model)**
 Spring Cloud Stream应用程序由一个middleware-neutral核心组成。 应用程序通过Spring Cloud Stream注入的输入和输出通道与外界进行通信。 这些通道需要通过目标中间件特定的绑定器实现与外部消息代理建立连接。
 
 
@@ -85,7 +85,7 @@ HTTP端点发布的数据被发送到名为raw-sensor-data通道。 从这儿开
 虽然发布 - 订阅的概念并不新鲜，但Spring Cloud Stream增加了额外的支持，使其成为这种应用程序模式的可选项。 由于使用了本地中间件支持，Spring Cloud Stream因此也有了简化使用跨不同平台的发布 - 订阅模型的能力。
 
 ### **2.4消费者分组(consumer group)**
-尽管发布 - 订阅模型使得通过共享主题连接应用变得很容易，但要想通过创建特定应用的多个实例来扩展服务能力变得方便也同样重要。 当这样做的时候，一个应用程序的不同实例便被放置在一个具有竞争属性的消费者关系组中，组里面的这些实例只有一个实例能够消费消息。
+尽管发布 - 订阅模型使得通过共享主题连接应用变得很容易，但要想通过创建特定应用的多个实例来扩展服务能力变得方便也同样重要。 当这样做的时候，一个应用程序的不同实例便被放置在一个具有竞争属性的消费者关系组中，组里面的这些实例只有一个能够消费消息。
 
 Spring Cloud Stream通过消费组(consumer group)的概念来模拟这种情景。 （Spring Cloud Stream的消费组(consumer group)与Kafka 的消费组(consumer group)相似，并且也受其启发。）每个消费者绑定可以使用spring.cloud.stream.bindings.<channelName>.group属性来指定一个群组(group)。 对于下图中显示的消费者，此属性应设置为:
 
@@ -93,7 +93,7 @@ spring.cloud.stream.bindings.<channelName>.group = hdfsWrite 或
 spring.cloud.stream.bindings.<channelName>.group = average。
 <img src="http://img.blog.csdn.net/20171204185525320" width=396 height=256 />
 
-所有订阅指定通道(raw-sensor-data)的组都会收到一份已发布数据的副本，但每个组中只有一个成员能够收到此消息。 默认情况下，当未指定分组时，Spring Cloud Stream会将为该应用程序分配一个匿名独立的分组，与其他所有消费分组处于同一个发布 - 订阅关系中。
+所有订阅指定通道(raw-sensor-data)的组都会收到一份已发布数据的副本，但每个组中只有一个成员能够收到此消息。 默认情况下，当未指定分组时，Spring Cloud Stream将会为该应用程序分配一个匿名独立的分组，与其他所有消费分组处于同一个发布 - 订阅环境中。
 
 #### **持久性(Durability)**
 与Spring Cloud Stream一贯的应用程序模式一致，消费组订阅是持久的。 也就是说，绑定器的实现已经确保了组订阅持久性，一旦创建了一个组的至少一个订阅，即使在组中的所有应用程序都停止了，消息也将会被发送到组。
@@ -101,7 +101,7 @@ spring.cloud.stream.bindings.<channelName>.group = average。
 > **注意：**
 匿名订阅本质上可以是非持久的。 对于一些绑定器的实现（例如，RabbitMQ），可能需要非持久的订阅。
 
-通常，将应用程序绑定到指定通道的时候，有必要为输出通道指定一个消费组。 在扩展Spring Cloud Stream应用程序时，您也必须为每个订阅应用的输入通道绑定指定的消费组。 这可以防止应用程序的实例接收到重复的消息（除非你运行这种行为）。
+通常，将应用程序绑定到指定通道的时候，有必要为输出通道指定一个消费组。 在扩展Spring Cloud Stream应用程序时，您也必须为每个订阅应用的输入通道绑定指定的消费组。 这可以防止应用程序的实例接收到重复的消息（除非你允许这种行为）。
 
 ### **2.5分区支持(Partitioning Support)**
 Spring Cloud Stream支持在特定应用程序的多个实例之间对数据进行分区消费。 在这种分区方案中，通信代理（broken topic）可以被理解为进行了同样的分区划分。 一个或多个生产者应用程序的实例将数据发送给多个消费者应用程序实例消费的时候，需要确保具有共同特征标识的数据由同一个消费者实例进行处理。
@@ -198,7 +198,7 @@ Spring Cloud Stream不为这些接口提供特殊处理; 仅仅是提供了开�
 #### **访问绑定的频道(Accessing Bound Channels)**
 
 ##### **注入绑定的接口(Injecting the Bound Interfaces)**
-对于每个已被绑定的接口，Spring Cloud Stream将生成一个实现了对应接口的bean。 调用一个被@Input或@Output修饰装配的bean方法后，将返回与之相关的绑定通道。
+对于每个已被绑定的接口，Spring Cloud Stream将生成一个实现了对应接口的bean。 调用一个被@Input或@Output修饰的bean方法后，将返回与之相关的绑定通道。
 
 以下示例中的bean在调用sayHello方法时会通过输出通道发送消息。 它调用注入的Source bean上的output()来获取目标通道。
 ```java
@@ -247,7 +247,7 @@ public interface CustomSource {
 	MessageChannel output();
 }
 ```
-通道将被直接注入的案例如下所示：
+通道被直接注入的案例如下所示：
 ```java
 @Component
 public class SendingBean { 
@@ -393,6 +393,7 @@ Spring Cloud Stream还支持使用响应式API来处理连续的传入和传出�
 响应式API的编程模式是声明式的，并不是指定每个单独的消息应如何被处理，而是数据流从传入到传出，通过功能转换运算来描述的。
 
 Spring Cloud Stream 支持以下的响应式API:
+
 • Reactor
 • RxJava 1.x
 
@@ -547,9 +548,9 @@ Spring Cloud Stream支持将多个应用程序聚合在一起，直接连接其�
 
 根据开始和结束单元的性质，sequence可能有一个或多个可绑定通道，如下所示：
 
-•如果序列以信源开始并以信宿结束，则应用程序之间的所有通信都是直接的，不会绑定任何信道
-•如果序列以处理器开始，则其输入通道将成为聚合的输入通道，并将相应地绑定
-•如果序列以处理器结束，则其输出通道将成为聚合的输出通道，并将相应地进行绑定
+•如果序列以Source开始并以Sink结束，则应用程序之间的所有通信都是直接的，不会绑定任何信道
+•如果序列以Processor开始，则其输入通道将成为聚合的输入通道，并将相应地绑定
+•如果序列以Processor结束，则其输出通道将成为聚合的输出通道，并将相应地进行绑定
 
 使用AggregateApplicationBuilder实用程序类执行聚合，如以下示例中所示。 让我们考虑一个项目，其中有Source，Processor和Sink，可以在项目中定义，也可以包含在项目的一个依赖项中。
 >**注意**
@@ -661,9 +662,9 @@ Spring Cloud Stream提供了一个Binder抽象，用于连接外部的目标中�
 
 <img src="http://img.blog.csdn.net/20171205103203738" width=696 height=200 />
 
-任何往通道中发布消息的组件都可称作生产者。通道可以通过代理的Binder实现与外部消息代理进行绑定。调用bindProducer()方法，第一个参数是代理名称，第二个参数是本地通道目标名称（生产者向本地通道发送消息），第三个参数包含通道创建的适配器的属性信息（比如：分片key表达式）。
+任何往通道中发布消息的组件都可称作生产者。通道可以通过代理的Binder实现与外部消息代理进行绑定。调用bindProducer()方法时，第一个参数是代理名称，第二个参数是本地通道目标名称（生产者向本地通道发送消息），第三个参数包含通道创建的适配器的属性信息（比如：分片key表达式）。
 
-任何从通道中接收消息的组件都可称作消费者。与生产者一样，消费者通道可以与外部消息代理进行绑定。调用bindConsumer()方法，第一个参数是目标名称，第二个参数提供了消费者组的名称。每个组都会收到生产中发出消息的副本（即，发布-订阅语义），如果有多个消费者绑定相同的组名称，消息只会由一个消费者消费（即，队列语义）
+任何从通道中接收消息的组件都可称作消费者。与生产者一样，消费者通道可以与外部消息代理进行绑定。调用bindConsumer()方法时，第一个参数是目标名称，第二个参数提供了消费者组的名称。每个组都会收到生产中发出消息的副本（即，发布-订阅），如果有多个消费者属于同一个组，消息只会由一个消费者消费（即，队列）
 
 ### **4.2 Binder SPI**
 Binder SPI包含许多接口，开箱即用的实用程序类以及为连接到外部中间件提供的机制发现策略。
@@ -678,7 +679,7 @@ public interface Binder<T, C extends ConsumerProperties, P extends ProducerPrope
 
 这些接口支持参数化，提供了许多扩展点：
 
-•输入和输出的目标绑定 - 不过从版本1.0开始，仅支持了MessageChannel，这也将用作将来的扩展点;
+•输入和输出的目标绑定 - 不过从版本1.0开始，仅支持了MessageChannel，这也将作为将来的扩展点;
 •扩展的消费者和生产者属性 - 允许特定的Binder以安全支持的方式实现添加补充属性。
 
 一个典型的Binder实现包括以下内容
@@ -692,7 +693,7 @@ org.springframework.cloud.stream.binder.kafka.config.KafkaBinderConfiguration
 ```
 
 ### **4.3 Binder 检测**
-Spring Cloud Stream依赖于Binder SPI的实现来执行将通道连接到消息代理的任务。 每个Binder通常需要具备连接到一种特定消息系统的实现。
+Spring Cloud Stream依赖于Binder SPI的实现来执行将通道连接到消息代理的任务。 每个Binder通常就是一个能连接到一种特定消息系统的具体实现。
 #### **路劲检测**
 默认情况下，Spring Cloud Stream依靠Spring Boot的自动配置来配置绑定过程。 如果在类路径中找到一个Binder实现，Spring Cloud Stream将自动使用它。 例如，需要绑定到RabbitMQ的Spring Cloud Stream项目可以简单地添加以下依赖项：
 ```xml
@@ -703,18 +704,18 @@ Spring Cloud Stream依赖于Binder SPI的实现来执行将通道连接到消息
 ```
 有关其他Binder依赖项的特定maven配置，请参阅Binder的文档。
 
-### **4.4 路劲上的多个Binder**
-如果路径中存在多个Binder，则应用程序必须指定为每个通道绑定使用的Binder。 每个Binder配置都要求有一个META-INF / spring.binders，它是一个简单的属性文件：
+### **4.4 路径上的多个Binder**
+如果路径中存在多个Binder，则应用程序必须指定每个通道绑定使用的Binder。 每个Binder配置都要求有一个META-INF / spring.binders，它是一个简单的属性文件：
 
 ```yml
 rabbit:\
 org.springframework.cloud.stream.binder.rabbit.config.RabbitServiceAutoConfiguration
 ```
 
-对于其他提供的Binder实现（例如Kafka）,也存在类似的文件，并且期望自定义的Binder实现也提供这种配置文件。 键(key)表示Binder实现的标识名称，而值(value)是逗号分隔的配置多个值，每个配置类有且仅有一个类型为org.springframework.cloud.stream.binder.Binder的bean定义。
+对于其他提供的Binder实现（例如Kafka）,也存在类似的文件，并且期望自定义的Binder实现也提供这种配置文件。 键(key)表示Binder实现的标识名称，而值(value)是逗号分隔的多个配置值，每个配置类有且仅有一个类型为org.springframework.cloud.stream.binder.Binder的bean定义。
 
-Binder选择可以全局生效，通过使用
-spring.cloud.stream.defaultBinder属性（spring.cloud.stream.defaultBinder = rabbit），或者单独在每个通道绑定上配置Binder。 例如，Processor应用程序（具有分别用于读取/写入的输入和输出的通道）从Kafka读取并写入RabbitMQ的处理器应用程序可以指定以下配置：
+Binder可以选择全局生效，通过使用
+spring.cloud.stream.defaultBinder属性（spring.cloud.stream.defaultBinder = rabbit），或者单独在每个通道绑定上配置Binder。 例如，Processor应用程序（具有分别用于读取/写入的输入和输出的通道的接口）从Kafka读取并写入RabbitMQ的处理器应用可以指定以下配置：
 ```yml
 spring.cloud.stream.bindings.input.binder=kafka
 spring.cloud.stream.bindings.output.binder=rabbit
@@ -723,9 +724,9 @@ spring.cloud.stream.bindings.output.binder=rabbit
 ### **4.5 连接到多个系统**
 默认情况下，各Binder可以共享Spring Boot的自动配置，以便创建在类路径中的每个Binder实例方便被发现。 如果您的应用连接到同一类型的多个代理服务，则可以指定多个Binder配置来使各个Binder具有不同的环境设置。
 >**注意**
->显式的Binder配置将完全禁用默认的Binder配置。 如果您这样做，则所有正在使用的Binder必须包含在配置中。 框架本身致力于使用Spring Cloud Stream可以透明地创建按名称引用的绑定器配置，不会影响默认绑定器配置。 为了达到这种目的，Binder配置可以将其defaultCandidate标志设置为false，例如，spring.cloud.stream.binders<configurationName>.defaultCandidate=false。 这表示自定义的Binder配置将独立于默认的配置而存在。
+>显式的Binder配置将完全禁用默认的Binder配置。 如果您这样做，则所有正在使用的Binder必须包含在配置中。 框架本身致力于使用Spring Cloud Stream可以透明地创建按名称引用的绑定器配置，而不影响默认绑定器配置。 为了达到这种目的，Binder配置可以将其defaultCandidate标志设置为false，例如，spring.cloud.stream.binders<configurationName>.defaultCandidate=false。 这表示自定义的Binder配置将独立于默认的配置而存在。
 
-例如，这是连接到两个RabbitMQ代理程序实例的Processor应用的典型配置：
+例如，这是连接到两个RabbitMQ代理服务的Processor应用的典型配置：
 ```yml
 spring:
   cloud:
@@ -762,10 +763,10 @@ inheritEnvironment：
 配置是否会继承应用程序本身的环境。默认为true
 
 environment：
-可用于自定义Binder环境的一组根属性。 当配置以后，正在创建Binder的上下文就不再是整个应用程序上下文的子属性关系啦。 这允许完全分离Binder部件和整个应用。默认为empty
+可用于自定义Binder环境的一组根属性。 当配置以后，正在创建Binder的上下文就不再是整个应用程序上下文的子属性了。 这允许完全分离Binder部件和整个应用。默认为empty
 
 defaultCandidate：
-无论是在用来配置Binder是否被视为默认Binder的候选项，或只在明确引用时使用。 这允许添加的Binder配置不干扰默认处理。默认为true
+无论Binder是否需要被配置为默认Binder，或仅在明确需要时声明并引用。 该属性允许你所添加的Binder配置不干扰默认的配置。默认为true
 
 ## **5 配置项(Configuration Options)**
 Spring Cloud Stream支持常规配置选项以及与Binder的配置。 一些Binder支持额外的绑定属性来支持中间件特定的功能。
@@ -776,11 +777,11 @@ Spring Cloud Stream支持常规配置选项以及与Binder的配置。 一些Bin
 请自行查阅文档
 
 ### **5.3 动态绑定目标的使用**
-除了通过@EnableBinding定义的通道之外，Spring Cloud Stream还允许应用程序将消息发送到动态绑定目标。 例如，当运行时需要动态确定目标时，这就有用武之地啦。 可以通过使用由@EnableBinding注释自动注册的BinderAwareChannelResolver bean来实现。
+除了通过@EnableBinding定义的通道外，Spring Cloud Stream还允许应用程序将消息发送到动态绑定的目标。 例如，当运行时需要动态指定目标时，这就有用武之地了。 可以通过使用由@EnableBinding注释自动注册的BinderAwareChannelResolver bean来实现。
 
-属性“spring.cloud.stream.dynamicDestinations”可用于将事先确定需要的目标名称集合设定为白名单。 如果没有设置该属性，则任何目的地都可以被动态绑定。
+属性“spring.cloud.stream.dynamicDestinations”可用于将事先需要确定的目标名称集合设定为白名单。 如果没有设置该属性，则任何目的地都可以被动态绑定。
 
-BinderAwareChannelResolver可以直接使用，如下例所示，其中REST控制器使用路径变量来决定目标通道。
+BinderAwareChannelResolver可以直接使用，如下例所示，其中REST控制器使用路径变量来决定路由。
 ```java
 @EnableBinding
 @Controller
@@ -808,13 +809,13 @@ public class SourceWithDynamicDestination {
 	}
 }
 ```
-发送以下数据并在默认端口8080监听：
+发送以下命令并在默认端口8080监听：
 ```shell
 curl -H "Content-Type: application/json" -X POST -d "customer-1" http://localhost:8080/customers
 curl -H "Content-Type: application/json" -X POST -d "order-1" http://localhost:8080/orders
 ```
 
-"customers"和"order"在代理服务中被创建（例如：RabbitMQ的exchange或kafka的topic）数据将被发布到名称为“customers”或“order”的目的地。
+"customers"和"order"在代理服务中被创建后（例如：RabbitMQ的exchange或kafka的topic），数据将被发布到名称为“customers”或“order”的目的地。
 
 BinderAwareChannelResolver是一个通用的Spring Integration DestinationResolver，可以注入到其他组件中。 例如，在使用基于传入JSON消息的目标字段的SpEL表达式的路由器中。
 
@@ -864,38 +865,38 @@ public class SourceWithDynamicDestination {
 
 ## **6 内容类型和转换**
 
-为了让你传播生成消息的内容类型信息，Spring Cloud Stream默认将contentType header附加到传出的消息中。 对于不直接支持头文件的中间件，Spring Cloud Stream提供了自己的传出消息自动封装机制。 对于支持标题的中间件，Spring Cloud Stream应用程序可以从非Spring Cloud Stream应用程序接收到具有给定内容类型的消息实体。
+为了让你可以传递消息的内容类型信息，Spring Cloud Stream默认将contentType header附加到传出的消息中。 对于不直接支持头文件的中间件，Spring Cloud Stream提供了自己的传出消息自动封装机制。 对于支持标题的中间件，Spring Cloud Stream应用程序可以从非Spring Cloud Stream应用程序接收到具有给定内容类型的消息实体。
 
 Spring Cloud Stream可以通过两种方式来支持这种带有contentType header的消息:
-•通过入站和出站通道的contentType设置
-•通过使用@StreamListener注解的方法进行参数映射
+•通过传入和传出通道的contentType设置
+•通过使用@StreamListener注解的方式进行参数映射
 
-Spring Cloud Stream允许使用spring.cloud.stream.bindings.<channelName> .content-type属性来声明性地配置输入和输出的类型转换。 请注意，通用类型转换也可以通过在应用程序中使用transformer来轻松完成。 目前，Spring Cloud Stream本身支持在流中常用的以下类型转换：
+Spring Cloud Stream允许使用spring.cloud.stream.bindings.<channelName>.content-type属性来配置输入和输出的类型转换策略。 请注意，通用类型转换也可以通过在应用程序中使用transformer来轻松完成。 目前，Spring Cloud Stream本身支持在流中常用的以下类型转换：
 ```yml
 • JSON to/from POJO
 • JSON to/from org.springframework.tuple.Tuple
-• Object to/from byte[] : 可以是应用程序为远程传输序列化的原始字节，也可以是使用Java序列化转换的字节（要求对象为Serializable）
+• Object to/from byte[] : 可以是应用程序方便远程传输的原始序列化字节，也可以是使用Java序列化转换的字节（要求对象为Serializable）
 • String to/from byte[]
 • Object to plain text 
 ```
 
-JSON表示包含JSON的字节数组或字符串有效实体。 目前，对象可以由JSON字节数组或字符串转换而来。 不过转换成JSON总是由一个字符串为基础来进行的。
+JSON表示包含JSON的字节数组或字符串有效实体。 目前，对象可以由JSON字节数组或字符串转换而来。 不过转换成JSON总是由一个字符串为基础来转化的。
 
-如果在传出通道上没有设置content-type属性，则Spring Cloud Stream将使用基于Kryo序列化框架的序列化程序对有效实体进行序列化。 接受者在反序列化消息的时候，需要有效实体类存在于接收者的类路径上。
+如果在传出通道上没有设置content-type属性，则Spring Cloud Stream将使用基于Kryo框架的序列化程序对有效实体进行序列化。 消费者在反序列化消息的时候，需要有效的目标实体类与消费者的类属于同一个上下午路径。
 
 ### **6.1 MIME 类型**
-content-type值会被当做media类型进行解析，例如application / json或text / plain; charset = UTF-8。 MIME类型对于指示如何将有效实体转换为String或byte []内容特别有用。 Spring Cloud Stream还使用MIME类型的格式application / x-java-object来表示Java类型。 例如，可以将application / x-java-object; type = java.util.Map或application / x-java- object; type = com.bar.Foo设置为输入绑定的内容类型。 另外，Spring Cloud Stream提供了自定义的MIME类型application / x-spring-tuple关联了一个Tuple。
+content-type值会被当做media类型进行解析，例如application / json或text / plain; charset = UTF-8。 MIME类型对于指示如何将有效实体转换为String或byte []内容特别有用。 Spring Cloud Stream还使用MIME类型的格式application / x-java-object来表示Java类型。 例如，可以将application / x-java-object; type = java.util.Map或application / x-java- object; type = com.bar.Foo设置为输入绑定的内容类型。 另外，Spring Cloud Stream提供了关联一个Tuple对象的自定义MIME类型格式application / x-spring-tuple。
 
 ### **6.2 MIME 类型 and Java 类型**
-下表总结了Spring Cloud Stream开箱即用的类型转换：“Source Payload”表示转换前的有效实体，“Target Payload”表示转换后的有效实体。 类型转换既可以在“生产者”一侧（输出）也可以在“消费者”一侧（输入）发生。
+下表总结了Spring Cloud Stream开箱即用的类型转换：“Source Payload”表示转换前的有效实体，“Target Payload”表示转换后的有效实体。 类型转换既可以在“生产者”一侧（输出）也可以在“消费者”一侧（输入）进行。
 
 <img src="http://img.blog.csdn.net/20171205133144560" width=566 height=540 />
 
 >**注意**
->转换适用于需要进行类型转换的有效实体。 例如，如果应用程序生成一个XML类型的消息，但并没有指定outputType = application / json，那么消息实体将不会从XML转换为JSON。 这是因为发送到传出通道的有效实体已经是一个字符串，所以不会在运行时进行转换。 同样重要的是要注意，当使用默认的序列化机制时，有效实体必须在发送和接收应用程序之间通用，也就是说二进制内容双方都得兼容。 当消息实体在两个应用程序中的某一方单独更改时，便会产生问题，因为二进制格式和提供的用于对接的代码会变得不兼容。
+>转换适用于需要进行类型转换的有效实体。 例如，如果应用程序生成一个XML类型的消息，但并没有指定outputType = application / json，那么消息实体将不会从XML转换为JSON。 这是因为发送到传出通道的有效实体已经是一个字符串，所以传输过程并不会进行转换。 同样重要的是，当使用默认的序列化机制时，有效实体必须在发送和接收应用程序之间通用，也就是说二进制内容双方都得兼容。 当消息实体在两个应用程序中的某一方单独更改时，便会产生问题，因为这个二进制格式的数据和提供用于对接的代码会变得不兼容。
 
 >**注意**
->虽然转换支持传入和传出通道，但还是推荐在传出消息的时候进行转换。 对于传入消息的转换，尤其是当目标是POJO时，@StreamListener将自动支持地进行转换。
+>虽然转换支持在传入和传出方进行，但还是推荐在传出消息的时候进行转换。 对于传入消息的转换，尤其是当目标是POJO时，@StreamListener将自动进行转换。
 
 ### **6.3 自定义消息转换**
 除了原本已支持的转换，Spring Cloud Stream还支持定制自己的消息类型转换实现。 这允许您以各种自定义格式（包括二进制）发送和接收数据，并将它们与特定的contentType关联。 Spring Cloud Stream将org.springframework.messaging.converter.MessageConverter类型的所有bean注册为作开箱即用的自定义消息转换器。
@@ -967,15 +968,15 @@ Spring Cloud Stream通过其spring-cloud-stream-schema模块为基于模式的�
 ### **7.1 Apache Avro 消息转换器**
 spring-cloud-stream-schema模块包含两种可以用于Apache Avro序列化的消息转换器：
 
-•使用序列化/反序列化对象的类信息，或启动时已定位的模式转化器;
-•使用在运行时定位模式注册表，以及可以随着域对象的变化动态注册的转化器。
+•序列化/反序列化对象信息，或启动时已被指定模式的转化器;
+•在运行时指定了模式注册表，且可以随着域对象的变化动态注册的转化器。
 
 ### **7.2具有模式支持的转换器**
-AvroSchemaMessageConverter支持使用预定义模式或使用类中已经有的模式信息对消息进行序列化和反序列化。 如果转换的目标类型是GenericRecord，则必须设置模式支持。
+AvroSchemaMessageConverter支持使用预定义模式或使用类中已经有的模式信息对消息进行序列化和反序列化。 如果转换的目标类型是GenericRecord，则必须设置模式的支持。
 
 为了简单地使用它，你可以将它添加到应用程序上下文中，可以选择指定一个或多个MimeTypes来关联它。 默认的MimeType是application / avro。
 
-下面是注册一个在没有预定义模式的Apache Avro MessageConverter到Sink应用程序中并对其进行配置的示例：
+下面是注册一个没有预定义模式的Apache Avro MessageConverter到Sink应用程序中并对其进行配置的示例：
 ```java
 @EnableBinding(Sink.class) 
 @SpringBootApplication
