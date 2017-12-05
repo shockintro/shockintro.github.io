@@ -14,7 +14,7 @@ public class VoteRecordingSinkApplication {
 	}
 	@StreamListener(Sink.INPUT)
 	public void processVote(Vote vote) {
-	 votingService.recordVote(vote);
+		votingService.recordVote(vote);
 	}
 }
 ```
@@ -29,16 +29,18 @@ public interface Sink {
 	SubscribableChannel input();
 }
 ```
-@Input注解标识一个输入通道，通过它接收消息到应用程序。@Output注解标识一个输出通道，发布的消息通过这个通道离开应用程序。 @Input和@Output注解可以将通道名称作为参数。如果没有提供名称，则使用被注释的方法名作为通道名称。
+@Input注解绑定一个输入通道，通过它接收消息到应用程序。@Output注解绑定一个输出通道，发布的消息通过这个通道离开应用程序。 @Input和@Output注解可以将通道名称作为参数。如果没有提供名称，则使用被注释的方法的方法名作为通道名称。
 
-Spring Cloud Stream将为你创建一个接口的实现。 你可以通过自动装配在应用程序中使用它，如下面的测试用例所示。
+Spring Cloud Stream会为你创建一个针对于该接口的实现。 你可以在应用程序中通过自动装配来使用它，如下面的测试用例所示。
 ```java
 @RunWith(SpringJUnit4ClassRunner.class) @SpringApplicationConfiguration(classes=VoteRecordingSinkApplication.class) 
 @WebAppConfiguration
 @DirtiesContext
 public class StreamApplicationTests {
+
 	@Autowired
 	private Sink sink;
+	
 	@Test
 	public void contextLoads() {
 		assertNotNull(this.sink.input());
@@ -46,7 +48,7 @@ public class StreamApplicationTests {
 }
 ```
 ## **2.重要概念**
-Spring Cloud Stream提供了许多抽象和原语，可以简化消息驱动微服务应用程序的编写。 本节将概述以下内容：
+Spring Cloud Stream提供了许多抽象和原语，用于简化针对于消息驱动的微服务应用程序的编写。 本节将概述以下内容：
 - **Spring Cloud Stream的应用程序模型**
 - **Binder抽象**
 - **持久的发布 - 订阅支持**
@@ -56,85 +58,86 @@ Spring Cloud Stream提供了许多抽象和原语，可以简化消息驱动微�
 
 
 ###**2.1应用模型(Application model)**
-Spring Cloud Stream应用程序由一个middleware-neutral核心组成。 应用程序通过Spring Cloud Stream注入的输入和输出通道与外界进行通信。 通道通过中间件特定的绑定器实现与外部消息代理的连接。
+Spring Cloud Stream应用程序由一个middleware-neutral核心组成。 应用程序通过Spring Cloud Stream注入的输入和输出通道与外界进行通信。 这些通道需要通过目标中间件特定的绑定器实现与外部消息代理建立连接。
 
 
 <img src="http://img.blog.csdn.net/20171204172642653" width=256 height=256 />
 
 #### **Fat JAR**
-Spring Cloud Stream应用程序可以在IDE中独立运行并进行测试。 要在生产环境中运行Spring Cloud Stream应用程序，可以使用Maven或Gradle提供的标准Spring Boot工具来创建可执行（或“fat”）JAR。
+Spring Cloud Stream应用程序可以在IDE中独立运行进行测试。 如果要在生产环境中运行Spring Cloud Stream应用程序，可以使用Maven或Gradle提供的标准Spring Boot插件来创建可执行的（或“fat”）JAR。
 
 ### **2.2 绑定器的抽象(The Binder Abstraction)**
-Spring Cloud Stream为Kafka和RabbitMQ提供了绑定器(Binder)的实现。 Spring Cloud Stream还包含一个TestSupportBinder组件，它可以让消息通道保持不变，以便测试时可以直接与通道交互，并且可以确保收到消息的通道就是你期望的通道。 你也可以使用可扩展的API编写你自己的Binder实现。
+Spring Cloud Stream为Kafka和RabbitMQ提供了单独的绑定器(Binder)实现。 Spring Cloud Stream还包含一个TestSupportBinder组件，它可以让消息通道保持不变，以便测试时可以直接与通道交互，并且可以确保收到消息的通道就是你期望的通道。 你也可以使用可扩展的API编写你自己的Binder实现。
 
-Spring Cloud Stream基于Spring Boot进行配置，同时Binder的抽象使得Spring Cloud Stream应用程序可以灵活地连接到指定的中间件服务。 例如，在程序运行期间，可以动态切换通道连接的目标（例如Kafka 主题(topics)或RabbitMQ的转换器(exchanges)）。 这可以通过外部配置属性，以及Spring Boot支持的任何形式（包括应用参数，环境变量，application.yml或application.properties文件）来配置。 在第1章“Spring Cloud Stream介绍”一节中的接收器示例中，将应用程序属性spring.cloud.stream.bindings.input.destination设置为raw-sensor-data将使我们的应用从原来读取数据的默认通道(比如默认有一个input通道)切换到raw-sensor-data通道读取数据。
+Spring Cloud Stream基于Spring Boot进行配置，同时Binder的抽象使得Spring Cloud Stream应用程序可以灵活地连接到指定的中间件服务。 例如，在程序运行期间，可以动态切换通道所连接的中间服务（例如Kafka的topics或RabbitMQ的exchanges）。 这可以通过外部属性配置，以及Spring Boot支持的任何形式（包括应用参数，环境变量，application.yml或application.properties文件）来配置。 在第1章“Spring Cloud Stream介绍”一节中的接收器示例中，将应用程序属性spring.cloud.stream.bindings.input.destination设置为raw-sensor-data将使我们的应用从原来读取数据的默认通道(比如默认有一个input通道)切换到raw-sensor-data通道读取数据。
 
-Spring Cloud Stream会自动检测并使用类路径中所找到的binder。 你可以用相同的代码轻松享受不同中间件所提供的服务：就是说在构建时你只需指定一个适合的binder即可，代码是通用的无需修改。 对于更复杂的用例，你还可以将多个中间件服务的binder与您的应用程序整合在一起，然后在运行时为不同的通道使用不同的中间件binder为你提供服务。
+Spring Cloud Stream会自动检测并使用类路径中所找到的binder。 你可以用相同的代码轻松享受不同中间件所提供的服务：就是说在构建时你只需指定一个适合的中间件binder即可，代码是通用的无需修改。 对于更复杂的用例，你还可以将多个中间件服务的binder与你的应用程序整合在一起，然后在运行时为不同的通道使用不同的中间件binder来提供服务。
 
 ### **2.3持久的发布 - 订阅支持**
 应用程序之间的通信遵循发布 - 订阅模式(publish-subscribe)，数据通过共享主题(topic)进行广播。 在下图中可以看到，其中显示了一组典型的Spring Cloud Stream应用程序相互作用的部署形式。
 
 <img src="http://img.blog.csdn.net/20171204180850936" width=256 height=256 />
 
-HTTP端点发布的数据被发送到名为raw-sensor-data通道。 从这儿开始，数据便由一个计算时间窗平均值的微服务应用和一个将原始数据读入到HDFS的微服务应用进行独立地处理。 为了能获得数据进行消费，两个应用程序在运行时都需声明这个topic，即将raw-sensor-data作为它们的订阅通道。
+HTTP端点发布的数据被发送到名为raw-sensor-data通道。 从这儿开始，数据便由一个计算时间窗平均值的微服务应用和一个需要将原始数据读入到HDFS的微服务应用进行独立地处理。 为了能获得数据进行消费，两个应用程序在运行时都需声明这个topic，即将raw-sensor-data作为它们的订阅通道。
 
-发布 - 订阅通信(publish-subscribe)模型降低了生产者和消费者的复杂结合，允许将新的应用程序添加到拓扑中，从而不中断现有的流程。 例如，在平均计算应用程序的下游，您可以添加一个应用程序来计算和显示监视的最高温度值。 然后还可以添加另一个应用程序来解释相同的平均流量以进行对比性故障检测。 通过共享主题而不是点对点的队列进行所有通信可以减少微服务之间的耦合。
+发布 - 订阅通信(publish-subscribe)模型降低了生产者和消费者的复杂结合，允许将新的应用程序添加到拓扑中，从而不中断现有的流程。 例如，在平均计算应用程序的下游，您可以添加一个应用程序来计算和显示监视的最高温度值。 然后还可以添加另一个应用程序来解释相同的平均流量以进行对比性故障检测。 通过共享主题而不是点对点的队列进行通信可以减少微服务之间的耦合。
 
-虽然发布 - 订阅消息传递的概念并不新鲜，但Spring Cloud Stream增加了额外的支持，使其成为应用程序模型的可选项。 由于使用了本机中间件支持，Spring Cloud Stream因此也有了简化跨不同平台的发布 - 订阅模型使用的能力。
+虽然发布 - 订阅的概念并不新鲜，但Spring Cloud Stream增加了额外的支持，使其成为这种应用程序模式的可选项。 由于使用了本地中间件支持，Spring Cloud Stream因此也有了简化使用跨不同平台的发布 - 订阅模型的能力。
 
 ### **2.4消费者分组(consumer group)**
-尽管发布 - 订阅模型使得通过共享主题连接应用变得容易，但通过创建特定应用的多个实例来扩展服务能力同样重要。 当这样做的时候，一个应用程序的不同实例便被放置在一个具有竞争属性的消费者关系组中，组里面的这些实例只有一个能够消费消息。
+尽管发布 - 订阅模型使得通过共享主题连接应用变得很容易，但要想通过创建特定应用的多个实例来扩展服务能力变得方便也同样重要。 当这样做的时候，一个应用程序的不同实例便被放置在一个具有竞争属性的消费者关系组中，组里面的这些实例只有一个实例能够消费消息。
 
-Spring Cloud Stream通过消费组(consumer group)的概念来模拟这种情景。 （Spring Cloud Stream的消费组(consumer group)与Kafka 的消费组(consumer group)相似，并且也受其启发。）每个消费者绑定可以使用spring.cloud.stream.bindings.<channelName> .group属性来指定一个群组名称(group name)。 对于下图中显示的消费者，此属性将设置为:
+Spring Cloud Stream通过消费组(consumer group)的概念来模拟这种情景。 （Spring Cloud Stream的消费组(consumer group)与Kafka 的消费组(consumer group)相似，并且也受其启发。）每个消费者绑定可以使用spring.cloud.stream.bindings.<channelName>.group属性来指定一个群组(group)。 对于下图中显示的消费者，此属性应设置为:
 
-spring.cloud.stream.bindings.<channelName> .group = hdfsWrite 或
-spring.cloud.stream.bindings.<channelName> .group = average。
+spring.cloud.stream.bindings.<channelName>.group = hdfsWrite 或
+spring.cloud.stream.bindings.<channelName>.group = average。
 <img src="http://img.blog.csdn.net/20171204185525320" width=396 height=256 />
 
-所有订阅指定通道(raw-sensor-data)的组都会收到其已发布数据的副本，但每个组中只有一个成员能够收到来自此消息。 默认情况下，当未指定分组时，Spring Cloud Stream会将该应用程序分配到一个匿名独立的分组，与其他所有消费分组处于同一个发布 - 订阅关系中。
+所有订阅指定通道(raw-sensor-data)的组都会收到一份已发布数据的副本，但每个组中只有一个成员能够收到此消息。 默认情况下，当未指定分组时，Spring Cloud Stream会将为该应用程序分配一个匿名独立的分组，与其他所有消费分组处于同一个发布 - 订阅关系中。
 
 #### **持久性(Durability)**
-与Spring Cloud Stream一贯的应用程序模型一致，消费组订阅是持久的。 也就是说，绑定器的实现已经确保了组订阅持久性，并且一旦创建了一个组的至少一个订阅，即使在组中的所有应用程序都停止了，消息也将会被发送到组。
+与Spring Cloud Stream一贯的应用程序模式一致，消费组订阅是持久的。 也就是说，绑定器的实现已经确保了组订阅持久性，一旦创建了一个组的至少一个订阅，即使在组中的所有应用程序都停止了，消息也将会被发送到组。
 
 > **注意：**
-匿名订阅本质上是非持久的。 对于一些绑定器实现（例如，RabbitMQ），可能需要非持久的订阅。
+匿名订阅本质上可以是非持久的。 对于一些绑定器的实现（例如，RabbitMQ），可能需要非持久的订阅。
 
-通常，将应用程序绑定到指定通道的时候，有必要为输出通道指定一个消费组。 在扩展Spring Cloud Stream应用程序时，您也必须为每个订阅应用输入通道绑定指定的消费组。 这可以防止应用程序的实例接收到重复的消息（除非你需要这种行为）。
+通常，将应用程序绑定到指定通道的时候，有必要为输出通道指定一个消费组。 在扩展Spring Cloud Stream应用程序时，您也必须为每个订阅应用的输入通道绑定指定的消费组。 这可以防止应用程序的实例接收到重复的消息（除非你运行这种行为）。
 
 ### **2.5分区支持(Partitioning Support)**
-Spring Cloud Stream支持在特定应用程序的多个实例之间对数据进行分区消费。 在这种分区方案中，物理通信介质（broken topic）可以被理解为进行了同样的分区划分。 一个或多个生产者应用程序的实例将数据发送给多个消费者应用程序实例的时候，需要确保具有共同特征标识的数据由同一个消费者实例进行处理。
+Spring Cloud Stream支持在特定应用程序的多个实例之间对数据进行分区消费。 在这种分区方案中，通信代理（broken topic）可以被理解为进行了同样的分区划分。 一个或多个生产者应用程序的实例将数据发送给多个消费者应用程序实例消费的时候，需要确保具有共同特征标识的数据由同一个消费者实例进行处理。
 
-Spring Cloud Stream为了统一实现分区处理提供了一个通用的抽象。 无论代理服务本身是支持分区的（例如Kafka）还是不支持的（例如RabbitMQ），都可以使用分区。
+Spring Cloud Stream为了统一实现分区处理功能提供了一个通用的抽象。 无论代理服务本身是支持分区的（例如Kafka）还是不支持的（例如RabbitMQ），都可以使用分区。
 
 <img src="http://img.blog.csdn.net/20171204192824808" width=456 height=256 />
 
-分区在有状态处理中是一个至关重要的概念，无论是性能还是一致性的原因，为了确保所有相关数据经由同一个处理单元处理，分区都是至关重要的。 例如，在时间窗平均计算示例中，来自任何给定传感器的所有测量值都需要由相同的应用程序实例处理，这显然迎合了这种场景。
+分区在有状态处理中是一个至关重要的概念，无论是基于性能还是一致性的原因，为了确保所有相关数据经由同一个处理单元处理，分区都是至关重要的。 例如，在时间窗平均计算示例中，来自任何特定传感器的所有测量值都需要由相同的消费者应用实例处理，这显然迎合了这种场景。
 >**注意：**
->要使用分区处理方案，您必须同时配置生产者和消费者。
+>要使用分区处理，你必须同时对生产者和消费者进行配置。
 
 ## **3编程模型(Programming Model)**
-本节介绍Spring Cloud Stream的编程模型。 Spring Cloud Stream提供了许多预定义的注解来声明和绑定输入和输出通道，以及如何监听通道。
+本节介绍Spring Cloud Stream的编程模型。 Spring Cloud Stream提供了许多预定义的注解来声明和绑定输入输出通道，以及监听通道。
 
 ### **3.1生命和绑定通道(Declaring and Binding Channels)**
 
 #### **通过@EnableBinding建立绑定**
 
-您可以将@EnableBinding注解应用于其中一个应用程序的配置类，以使Spring应用转换为Spring Cloud Stream应用。 @EnableBinding注解本身就使用了@Configuration注解，因此触发Spring Cloud Stream基础结构的配置：
+您可以将@EnableBinding注解应用于其中一个应用程序的配置类，以使Spring应用转换为Spring Cloud Stream应用。 @EnableBinding注解本身就使用了@Configuration注解，因此会触发对Spring Cloud Stream基础结构的配置：
 ```java
 ...
 @Import(...)
-@Configuration @EnableIntegration
+@Configuration 
+@EnableIntegration
 public @interface EnableBinding {
 	...
 	Class<?>[] value() default {}; 
 }
 ```
-@EnableBinding注解可以将一个或多个具有绑定通道方法的接口类作为参数。
+@EnableBinding注解可以将一个或多个具有绑定通道方法的接口作为参数。
 >**注意**
->@EnableBinding注解仅在您的配置类中配置即可，您可以根据需要提供尽可能多的接口，例如：@EnableBinding（value = {Orders.class，Payment.class}），其中Order和Payment接口将声明@Input和@Output通道。
+>@EnableBinding注解仅需在你的配置类中配置，你可以根据需要提供尽可能多的接口，例如：@EnableBinding（value = {Orders.class，Payment.class}），其中Order和Payment接口将提供@Input和@Output绑定的通道。
 
 #### **@Input and @Output**
-Spring Cloud Stream应用程序可以在接口中用@Input和@Output定义任意数量的输入和输出通道的方法：
+Spring Cloud Stream应用程序可以在接口中用@Input和@Output定义任意数量的输入和输出通道：
 ```java
 public interface Barista { 
 	@Input
@@ -145,7 +148,7 @@ public interface Barista {
     MessageChannel coldDrinks();
 }
 ```
-将此接口用作@EnableBinding的参数将触发创建名为orders，hotDrinks和coldDrinks的三个绑定通道。
+将此接口用作@EnableBinding的参数将触发创建名为orders，hotDrinks和coldDrinks的三个通道。
 ```java
 @EnableBinding(Barista.class)
 public class CafeConfiguration { 
@@ -153,23 +156,23 @@ public class CafeConfiguration {
 }
 ```
 >**注意**
->在Spring Cloud Stream中，可绑定的消息通道组件有Spring 传递消息的MessageChannel(用于传出）及其扩展的SubscribableChannel（用于传出）组件。 使用的事与其他可绑定组件相同的机制。 在Spring Cloud Stream的Kafka binder中，KStream就是作为传入/传出时一个可被绑定的组件。 在本文档中，我们将以MessageChannels这个可绑定组件为主要研究对象。
+>在Spring Cloud Stream中，可绑定的消息通道组件有Spring用于传递消息的MessageChannel(用于传出）及其扩展的SubscribableChannel（用于传入）组件。 使用的是与其他可绑定组件相同的机制。 在Spring Cloud Stream的Kafka binder中，KStream就是作为传入/传出时一个可被绑定的组件。 而在本文档中，我们将以MessageChannels这个可绑定组件为主要研究对象。
 
 #### **自定义通道名(Customizing Channel Names)**
-使用@Input和@Output注解，您可以为通道指定自定义通道名称，如以下示例所示：
+使用@Input和@Output注解，你可以为通道指定自定义的通道名称，如以下示例所示：
 ```java
 public interface Barista { 
 	...
-    @Input("inboundOrders")
-    SubscribableChannel orders();
+	@Input("inboundOrders")
+	SubscribableChannel orders();
 }
 ```
-在这个例子中，创建的绑定通道将被命名为inboundOrders。
+在这个例子中，创建的通道将被命名为inboundOrders。
 
 #### **Source, Sink, 和 Processor**
-为了便于处理最常见的使用情景（比如仅有输入通道，仅有输出通道或两者都需要），Spring Cloud Stream提供了三种预定义的接口。
+为了便于处理最常见的使用情景（比如仅有输入通道，仅有输出通道或两者都有），Spring Cloud Stream提供了三种预定义的接口。
 
-Source可用于具有单个传出通道的应用程序。
+Source可用于具有单个传出通道的应用。
 ```java
 public interface Source { 
 	String OUTPUT = "output";
@@ -177,7 +180,7 @@ public interface Source {
 	MessageChannel output();
 }
 ```
-Sink可用于具有单个传入通道的应用程序。
+Sink可用于具有单个传入通道的应用。
 ```java
 public interface Sink { 
 	String INPUT = "input";
@@ -185,7 +188,7 @@ public interface Sink {
 	SubscribableChannel input();
 }
 ```
-Processor可用于具有传入通道和传出通道的应用程序。
+Processor可用于具有传入通道和传出通道的应用。
 ```java
  public interface Processor extends Source, Sink {
  }
@@ -195,17 +198,20 @@ Spring Cloud Stream不为这些接口提供特殊处理; 仅仅是提供了开�
 #### **访问绑定的频道(Accessing Bound Channels)**
 
 ##### **注入绑定的接口(Injecting the Bound Interfaces)**
-对于每个已被绑定的接口，Spring Cloud Stream将生成一个实现了对应接口的bean。 调用一个被@Input注解或@Output注解装配的bean方法后，将返回与之相关绑定了的通道。
+对于每个已被绑定的接口，Spring Cloud Stream将生成一个实现了对应接口的bean。 调用一个被@Input或@Output修饰装配的bean方法后，将返回与之相关的绑定通道。
 
-以下示例中的bean在调用hello方法时会在输出通道上发送消息。 它调用注入的Source bean上的output（）来检索目标通道。
+以下示例中的bean在调用sayHello方法时会通过输出通道发送消息。 它调用注入的Source bean上的output()来获取目标通道。
 ```java
 @Component
 public class SendingBean { 
+
 	private Source source;
 	@Autowired
+	
 	public SendingBean(Source source) { 
 		this.source = source;
 	}
+	
 	public void sayHello(String name) {
 		source.output().send(
 			MessageBuilder.withPayload(name).build()
@@ -218,12 +224,14 @@ public class SendingBean {
 ```java
 @Component
 public class SendingBean { 
+
 	private MessageChannel output;
 	@Autowired
 	
 	public SendingBean(MessageChannel output) { 
 		this.output = output;
 	}
+	
 	public void sayHello(String name) {
 		output.send(
 			MessageBuilder.withPayload(name).build()
@@ -231,23 +239,26 @@ public class SendingBean {
 	} 
 }
 ```
-如果通道的名称是在声明的注释中定制的，则使用时的通道名称应该是定制的名称而不是方法名称。 鉴于以下声明：
+如果通道的名称是在注释中声明的，则使用时的通道名称应该是定制的名称而不是方法名称。 鉴于以下声明：
 ```java
 public interface CustomSource { 
 	...
-    @Output("customOutput")
-    MessageChannel output();
+	@Output("customOutput")
+	MessageChannel output();
 }
 ```
-通道将被注入，如下例所示：
+通道将被直接注入的案例如下所示：
 ```java
 @Component
 public class SendingBean { 
+
 	private MessageChannel output;
 	@Autowired
+	
 	public SendingBean(@Qualifier("customOutput") MessageChannel output) {
 		this.output = output;
 	}
+	
 	public void sayHello(String name) {
 		this.output.send(
 			MessageBuilder.withPayload(name).build()
@@ -256,14 +267,17 @@ public class SendingBean {
 }
 ```
 #### **生产与消费消息(Producing and Consuming Messages)**
-您可以使用Spring Integration注解或Spring Cloud Stream的@StreamListener注解编写Spring Cloud Stream应用程序。 @StreamListener注解模仿其他Spring Message注解（例如@MessageMapping，@JmsListener，@RabbitListener等），但添加了内容类型管理和类型强制功能。
+您可以使用Spring Integration的注解或Spring Cloud Stream的@StreamListener注解编写Spring Cloud Stream应用程序。 @StreamListener注解模仿的是其他Spring Message类型的注解（例如@MessageMapping，@JmsListener，@RabbitListener等），不过额外添加了内容类型管理和类型转换功能。
 
 ##### **本地Spring Integeration支持(Native Spring Integration Support)**
-由于Spring Cloud Stream基于Spring Integration，Stream完全继承了Integration的基建设施以及组件本身。 例如，您可以将Source的输出通道对接到MessageSource：
+由于Spring Cloud Stream是基于Spring Integration的，因此Spring Cloud Stream完全继承了Spring Integration的基建设施以及组件本身。 例如，你可以将Source的输出通道对接到MessageSource：
 ```java
 @EnableBinding(Source.class)
-public class TimerSource { @Value("${format}")
+public class TimerSource { 
+
+	@Value("${format}")
 	private String format;
+	
 	@Bean
 	@InboundChannelAdapter(
 		value = Source.OUTPUT,
@@ -278,10 +292,11 @@ public class TimerSource { @Value("${format}")
 	} 
 }
 ```
-或者你可以在转换器中使用Processor通道：
+或者你可以结合转换器和Processor提供的通道一起使用：
 ```java
 @EnableBinding(Processor.class)
 public class TransformProcessor {
+
 	@Transformer(
 		inputChannel = Processor.INPUT,
 		outputChannel = Processor.OUTPUT) 
@@ -291,25 +306,26 @@ public class TransformProcessor {
 }
 ```
 >**注意**
->重要的是要明白，当从同一个被@StreamListener注解修饰的绑定消费消息时，就已经形成了pub-sub模式，每个使用@StreamListener注解的方法都会收到它自己的消息副本，每个方法都有自己的消费分组(匿名的)。 但是，如果您将一个可绑定的通道作为@Aggregator，@Transformer或@ServiceActivator的输入，则这些通道的消息将在竞争模式中被消费，因此便不会为每个订阅创建单个消费组。
+>重要的是要明白，当多个被@StreamListener注解修饰的方法订阅同一个通道时，就已经形成了pub-sub模式，每个使用@StreamListener注解的方法都会收到一份属于自己的消息副本，每个方法都有自己的消费分组(匿名的)。 但是，如果您将一个通道作为@Aggregator，@Transformer或@ServiceActivator的输入通道，则这个通道发出的消息将在竞争模式中被消费，因此便不会为每个订阅者创建单独的消费组。
 
 ##### **Spring Integeration的错误通道支持(Spring Integration Error Channel Support)**
-Spring Cloud Stream支持Spring Integration的全局“错误通道”来接收发布出错的消息的能力。发送到errorChannel的错误消息可以通过一个名为error的绑定来将消息发布到特定的地方。 例如，要将错误消息发布到名为“myErrors”的代理目标，需提供以下属性配置：spring.cloud.stream.bindings.error.destination = myErrors。
+Spring Cloud Stream支持Spring Integration所提供的全局“错误通道”来接收那些发布出错消息的能力。发送出错的消息可以通过一个名为error的绑定来将消息发布到特定的地方。 例如，要将错误消息发布到名为“myErrors”的代理目标，只需提供以下的属性配置：spring.cloud.stream.bindings.error.destination = myErrors。
 
 ##### **消息通道绑定器和错误通道(Message Channel Binders and Error Channels)**
-自版本1.3开始，有了一些能将错误消息发布到“错误通道"的MessageChannel的绑定器。 此外，这些错误通道被桥接到上面提到的全局的Spring Integeration提供的“错误通道”。 因此，您可以使用标准的Spring Integration流（IntegrationFlow，@ServiceActivator等）来消费特定或全局的错误消息。
+自版本1.3开始，支持了一些能将出错消息发布到“错误通道"的绑定器。 此外，这些错误通道会被桥接到上面提到Spring Integeration提供的全局“错误通道”上。 因此，您可以使用标准的Spring Integration流（IntegrationFlow，@ServiceActivator等）来消费局部或全局的出错消息。
 
-在客户端，监听器线程捕获任何异常后，将ErrorMessage转发到指定的错误通道。 消息的有效实体通常具有错误消息本身(failedMessage)和错误原因(MessagingException)。 通常，从代理收到的原始数据被包含在header中。 对于支持（或配置）了“错误通道”的绑定，会有一个MessagePublishingErrorHandler订阅该“错误通道”，原始数据将被转发至此。
+在客户端，监听器线程捕获任何异常后，会将出错消息转发到指定的错误通道。 消息的有效实体通常具有错误消息本身(failedMessage)和错误原因(MessagingException)。 通常，从代理收到的原始数据会包含在header中。 对于支持（或配置）了“错误通道”的绑定，会有一个MessagePublishingErrorHandler订阅该“错误通道”，原始数据将被转发至此。
 
-在生产者方面; 对于发布消息后支持某种异步结果的绑定器（例如RabbitMQ，Kafka），可以通过将... producer.errorChannelEnabled设置为true来启用错误通道。 ErrorMessage的有效实体取决于绑定器的具体实现，但都会有一个带有failedMessage属性的MessagingException，和关于失败的附加属性。 有关完整的详细信息，请参阅binder文档。
+在生产者(Producer)方面; 对于一些发布消息后支持某种异步结果的绑定器（例如RabbitMQ，Kafka），可以通过将... producer.errorChannelEnabled设置为true来启用错误通道。 ErrorMessage的有效实体取决于绑定器的具体实现，但都会有一个带有failedMessage属性的MessagingException，和关于失败信息的附加属性。 有关完整的详细信息，请参阅Binder文档。
 
 ##### **使用@StreamListener进行自动内容类型处理**
-作为Spring Integration支持的补充，Spring Cloud Stream提供了自己的@StreamListener注解，模仿其他的Spring Messaging注解（例如@MessageMapping，@JmsListener，@RabbitListener等）。 @StreamListener注解为处理传入的消息提供了一个更简单的模型，特别是在处理涉及内容类型管理和类型控制的用例时。
+作为Spring Integration支持的补充，Spring Cloud Stream提供了自己的@StreamListener注解，模仿其他的Spring Messaging注解（例如@MessageMapping，@JmsListener，@RabbitListener等）。 @StreamListener注解为传入的消息的处理提供了一个更简单的模型，特别是在处理涉及到内容类型管理和类型转换的场景时。
 
-Spring Cloud Stream提供了一个可扩展的MessageConverter机制来处理通过绑定通道进行的数据转换，并且将消息分发到使用了@StreamListener注解的方法处理。 以下是一个针对于处理投票事件的应用程序示例：
+Spring Cloud Stream提供了一个可扩展的消息转换器(MessageConverter)机制来处理经由绑定通道处理的数据转换，并且会将消息分发到使用了@StreamListener注解的方法进行处理。 以下是一个针对于处理投票事件的应用程序示例：
 ```java
 @EnableBinding(Sink.class)
 public class VoteHandler { 
+
 	@Autowired
 	VotingService votingService;
 	
@@ -319,14 +335,15 @@ public class VoteHandler {
 	} 
 }
 ```
-考虑到在具有String类型实体和具有application / json类型contentType头(header)的消息传入时@StreamListener和Spring Integration的 @ServiceActivator之间的区别时，在使用@StreamListener的情况下，MessageConverter机制将使用contentType的头(header)信息将String类型的有效实体解析为一个Vote对象。
+考虑到具有String类型或application / json类型数据的带contentType头(header)的消息传入时，@StreamListener和Spring Integration的 @ServiceActivator之间的区别，在使用@StreamListener的情况下，MessageConverter机制将使用contentType的头(header)信息的contentType数据类型来将消息有效实体解析为Vote对象。
 
-和其他Spring Messaging方法一样，方法参数可以用@Payload，@Headers和@Header来添加注解。
+和其他Spring Messaging方法一样，方法参数可以用@Payload，@Headers和@Header注解来修饰。
 >**注意**
->对于需要返回数据的方法，必须使用@SendTo注解来指定返回数据方法需要用来输出的消息通道：
+>对于需要返回数据的方法，必须使用@SendTo注解来指定需要返回数据的方法用来输出消息的通道：
 ```java
 @EnableBinding(Processor.class)
 public class TransformProcessor { 
+
 	@Autowired
 	VotingService votingService;
 	
@@ -338,19 +355,20 @@ public class TransformProcessor {
 }
 ```
 ##### **使用@StreamListener将消息分派给多个方法**
-从版本1.2开始，Spring Cloud Stream支持根据条件将消息分发到多个订阅了指定输入通道的@StreamListener方法进行处理。
-为了具备资格支持这种条件的调度，这些方法必须满足以下条件：
+从版本1.2开始，Spring Cloud Stream支持根据条件将消息分发到多个订阅了指定输入通道的被@StreamListener修饰的方法进行处理。
+为了支持这种调度，需满足以下条件：
 
 •不能有返回值
-•必须是一个单独处理消息的方法（不支持响应式API方法）
+•必须是一个独立处理消息的方法（不支持响应式API方法）
 
-这些条件通过注解的SpEL条件表达式指定，并针对每条消息进行判定。 所有符合指定条件的处理程序都将在同一个线程中被调用，并且调用的顺序不会被确定。
+这些条件通过注解的SpEL条件表达式来确定，并且会针对每条消息进行判定。 所有相同判定条件的处理程序都将会在同一个线程中调用，并且调用的顺序不被确定。
 
-下面是一个使用@StreamListener注解调度条件的例子。 在这个例子中，所有报头值为foo的消息都将被分发到receiveFoo方法进行处理，所有报头带有值为bar的消息将被分配到receiveBar方法。
+下面是一个使用@StreamListener注解进行条件调度的例子。 在这个例子中，所有报头值为foo的消息都将被分发到receiveFoo方法进行处理，所有报头带有值为bar的消息将被分配到receiveBar方法。
 ```java
 @EnableBinding(Sink.class)
 @EnableAutoConfiguration
 public static class TestPojoWithAnnotatedArguments {
+
 	@StreamListener(
 			target = Sink.INPUT, 
 			condition "headers['type']=='foo'") 
@@ -367,26 +385,26 @@ public static class TestPojoWithAnnotatedArguments {
 }
 ```
 >**注意**
->每一个@StreamListener的条件调度仅支持单个消息的处理，同时也不支持响应式编程（如下所述）。
+>每一个@StreamListener的条件调度仅支持单个消息的处理，不支持响应式编程（如下所述）。
 
 #### **响应式编程支持(Reactive Programming Support)**
-Spring Cloud Stream还支持使用响应式API来处理连续的传入和传出数据流。 对响应式API的支持可以通过使用spring-cloud-stream-reactive依赖获得，需要将其明确地添加到项目中。
+Spring Cloud Stream还支持使用响应式API来处理连续的传入和传出数据流。 对响应式API的支持可以通过使用spring-cloud-stream-reactive依赖获得，仅需要将其明确地添加到项目依赖中。
 
-响应式API的编程模型是声明式的，并不是指定每个单独的消息应如何被处理，而是数据流从传入到传出，通过功能转换运算来描述。
+响应式API的编程模式是声明式的，并不是指定每个单独的消息应如何被处理，而是数据流从传入到传出，通过功能转换运算来描述的。
 
-Spring Cloud Stream 以下响应式API:
+Spring Cloud Stream 支持以下的响应式API:
 • Reactor
 • RxJava 1.x
 
-将来将会支持更多通用的响应式API
+将来会支持更多通用的响应式API
 
 响应式编程模型同样可以使用@StreamListener注解来设置响应式处理程序。 不同之处在于：
-•@StreamListener注解不能指定具体的输入或输出，因为它们在方法中是作为入参和返回值确定的;
-•方法的参数必须被@Input和@Output标识，因为需要将传入的数据和传出的数据和对应的通道关联上;
-•方法的返回值（如果有的话）需要用@Output标识，指明数据将被发送至何处。
+•@StreamListener注解不能指定具体的输入或输出，因为输入输出通道在方法中是作为入参和返回值确定的;
+•方法的参数必须被@Input和@Output标识，因为需要将传入的数据和传出的数据与对应的通道关联上;
+•方法的返回值（如果有的话）需要用@Output标识，指明数据需要被发送至何处。
 
 >**注意**
->响应式编程仅支持Java1.8以上版本
+>响应式编程仅支持Jdk 1.8以上版本
 
 >**注意**
 >从Spring Cloud Stream 1.1.1及更高版本（从发行版Brooklyn.SR2开始），响应式编程的支持需要使用Reactor 3.0.4.RELEASE及更高版本的依赖。 早期版本的Reactor（包括3.0.1.RELEASE，3.0.2.RELEASE和3.0.3.RELEASE）不被支持。 spring-cloud-stream-reactive将会检索合适的版本，但项目结构的构建过程有可能会出现将io.projectreactor：reactor-core的版本自动配置为一个早期版本，特别是在使用Maven时。 比如用Spring Boot 1.x初始化Spring项目的时候，它将覆盖Reactor版本为2.0.8.RELEASE。 这时，您必须确保发布组件的版本正确。 你可以通过在项目中添加对io.projectreactor：reactor-core版本为3.0.4.RELEASE或更高版本的直接依赖来达到目的。
